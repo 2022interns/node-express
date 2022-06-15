@@ -3,6 +3,8 @@ var router = express.Router();
 const graphController = require('../controllers/graphController');
 
 
-router.get('/find',graphController.findMeetingTimes);
+router.post('/find',graphController.findMeetingTimesApi);
+router.get('/',graphController.findMeetingTimesget);
+router.post('/sugg',graphController.suggest);
 
 module.exports = router;
