@@ -1,6 +1,7 @@
 var express = require('express');
 var app = express();
 var request = require('request');
+var graphRoute =require('./routes/graphRoute');
 const cors = require('cors');
 app.use(cors());
 
@@ -9,6 +10,8 @@ var bodyParser = require('body-parser')
 app.use(bodyParser.urlencoded({ extended: false }))
 // parse application/json
 app.use(bodyParser.json());
+
+app.use('/graph',graphRoute);
 
 app.get('/', function (req, res) {
     let body ={
@@ -61,6 +64,7 @@ app.get('/', function (req, res) {
         return res.status(201).send(response.body);
     });
 });
+
 app.post('/', function (req, res) {
     let body = req.body;
     var clientServerOptions = {
@@ -98,22 +102,6 @@ app.get('/token', function (req, res) {
     });
 });
 
-app.get('/amani',(req,res)=>{
-    const response ={
-        "nom":'amani',
-        "prenom":"amani"
-    };
-    return res.status(200).send(response);
-});
-
-app.post('/amani',(req,res)=>{
-    const body = req.body;
-    const response = {
-        "result":`user created: ${body.name}`
-    }
-
-    return res.status(200).send(response);
-});
 
 app.get('/newjoiners',(req,res)=>{
     const newjoiners = [
@@ -175,7 +163,81 @@ app.get('/newjoiners',(req,res)=>{
         }
     ];
     return res.status(200).send(newjoiners);
-})
+});
+
+const findMeetingTimes= async (token,body)=>{
+    var clientServerOptions = {
+        uri: 'https://graph.microsoft.com/v1.0/me/findMeetingTimes',
+        body: JSON.stringify(body),
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    };
+    request(clientServerOptions, function (error, response) {
+        return response.body;
+    });
+};
+
+app.post('/sugg', function (req, res) {
+    let mentors = req.body.mentors;
+    let newjoiners = req.body.newjoiners;
+    let response = {
+        meetingSugg: []
+    };
+
+    for (var index = 0; index < mentors.length; index++) {
+        let obj={
+            "attendees": [
+                {
+                    "type": "required",
+                    "emailAddress": {
+                        "address": mentors[index].email
+                    }
+                },
+                {
+                    "type": "required",
+                    "emailAddress": {
+                        "address": newjoiners[index].email
+                    }
+                }
+            ],
+            "locationConstraint": {
+                "isRequired": "false",
+                "suggestLocation": "false"
+            },
+            "timeConstraint": {
+                "activityDomain": "work",
+                "timeSlots": [
+                    {
+                        "start": {
+                            "dateTime": "2022-06-14T10:34",
+                            "timeZone": "W. Central Africa Standard Time"
+                        },
+                        "end": {
+                            "dateTime": "2022-06-15T10:34",
+                            "timeZone": "W. Central Africa Standard Time"
+                        }
+                    }
+                ]
+            },
+            "meetingDuration": "PT1H",
+            "returnSuggestionReasons": "true",
+            "minimumAttendeePercentage": "100"
+        };
+
+        let result = findMeetingTimes(req.body.token,obj);
+
+        response.meetingSugg.push({
+            mentor: mentors[index].name,
+            newjoiner: newjoiners[index].name,
+            meetings: result
+        })
+    }
+
+    return res.status(201).send({result: response});
+});
 
 app.listen(3000, function () {
     console.log('Example app listening on port 3000!');
