@@ -64,7 +64,7 @@ exports.findMeetingTimesget= async (req,res) => {
     };
     request(clientServerOptions, function (error, response) {
         console.log(error,response.body);
-        return res.status(201).send(response.body);
+        return res.status(201).send(response.body)
     });
 }
 
@@ -76,7 +76,7 @@ exports.suggest = async (req,res) => {
     };
 
     for (var index = 0; index < mentors.length; index++) {
-        let obj={
+        let obj = {
             "attendees": [
                 {
                     "type": "required",
@@ -115,13 +115,25 @@ exports.suggest = async (req,res) => {
             "minimumAttendeePercentage": "100"
         };
 
-        let result = findMeetingTimes(req.body.token,obj);
-
+        var clientServerOptions = {
+            uri: 'https://graph.microsoft.com/v1.0/me/findMeetingTimes',
+            body: JSON.stringify(obj),
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${req.body.token}`
+            }
+        };
+        var result;
+        result =await findMeetingTimes(req.body.token,obj);
+        console.log(result)
         response.meetingSugg.push({
             mentor: mentors[index].name,
             newjoiner: newjoiners[index].name,
             meetings: result
         })
+        //promise callback
+
     }
 
     return res.status(201).send({result: response});
@@ -137,7 +149,14 @@ const findMeetingTimes= async (token,body)=>{
             'Authorization': `Bearer ${token}`
         }
     };
-    request(clientServerOptions, function (error, response) {
+
+    /*let mypromise =new Promise((resolve,reject)=>{
+
+    });*/
+
+    let result = request(clientServerOptions, function (error, response) {
         return response.body;
     });
+
+    return result;
 };
