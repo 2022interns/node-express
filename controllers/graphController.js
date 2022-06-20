@@ -115,39 +115,29 @@ exports.suggest = async (req,res) => {
             "minimumAttendeePercentage": "100"
         };
 
-        var clientServerOptions = {
-            uri: 'https://graph.microsoft.com/v1.0/me/findMeetingTimes',
-            body: JSON.stringify(obj),
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${req.body.token}`
-            }
-        };
 
-        let result =await findMeetingTimes(req.body.token,obj)
+        let result =await findMeetingTimes(req.body.token,obj);
+
         response.meetingSugg.push({
             Mentors: mentors[index].name,
+            Mentor_email:mentors[index].email,
             New_joiner: newjoiners[index].name,
+            NewJoiner_email: newjoiners[index].email,
             meetings: result,
             Topic: 'Java',
             Meeting:'19/06/2022',
             button:''
         })
 
-        /*const result = await response.meetingSugg.map(async (sugg) => ({
-            mentor: mentors[index].name,
-            newjoiner: newjoiners[index].name,
-            meetings: await findMeetingTimes(req.body.token,obj)
-        }))*/
-        //return res.status(201).send({result: response});
-
-        //promise callback
 
     }
 
     return res.status(201).send({result: response});
-}
+};
+
+const sleep =(ms) =>{
+    return new Promise(resolve => setTimeout(resolve, ms));
+};
 
 const findMeetingTimes= async (token,body)=>{
     var clientServerOptions = {
@@ -166,5 +156,48 @@ const findMeetingTimes= async (token,body)=>{
 
      request(clientServerOptions, function (error, response) {
         return response.body;
+    });
+};
+
+exports.CreateEvent= async (req,res)=>{
+
+    let body={
+        "subject": "First Meet",
+        "attendees": [
+            {
+                "emailAddress": {
+                    "address": req.body.users.Mentor_email
+                },
+                "type": "Required"
+            },
+            {
+                "emailAddress": {
+                    "address": req.body.users.NewJoiner_email
+                },
+                "type": "Required"
+            }
+        ],
+        "start": {
+            "dateTime": "2022-06-20T14:00:00.775Z",
+            "timeZone": "UTC"
+        },
+        "end": {
+            "dateTime": "2022-06-20T15:00:00.775Z",
+            "timeZone": "UTC"
+        }
+    };
+    var clientServerOptions = {
+        uri: 'https://graph.microsoft.com/v1.0/me/events',
+        body: JSON.stringify(body),
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${req.body.token}`
+        }
+    };
+
+    request(clientServerOptions, function (error, response) {
+        console.log(response.body)
+        return res.status(201).send(response.body)
     });
 };
