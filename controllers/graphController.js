@@ -124,14 +124,24 @@ exports.suggest = async (req,res) => {
                 'Authorization': `Bearer ${req.body.token}`
             }
         };
-        var result;
-        result =await findMeetingTimes(req.body.token,obj);
-        console.log(result)
+
+        let result =await findMeetingTimes(req.body.token,obj)
         response.meetingSugg.push({
+            Mentors: mentors[index].name,
+            New_joiner: newjoiners[index].name,
+            meetings: result,
+            Topic: 'Java',
+            Meeting:'19/06/2022',
+            button:''
+        })
+
+        /*const result = await response.meetingSugg.map(async (sugg) => ({
             mentor: mentors[index].name,
             newjoiner: newjoiners[index].name,
-            meetings: result
-        })
+            meetings: await findMeetingTimes(req.body.token,obj)
+        }))*/
+        //return res.status(201).send({result: response});
+
         //promise callback
 
     }
@@ -154,9 +164,7 @@ const findMeetingTimes= async (token,body)=>{
 
     });*/
 
-    let result = request(clientServerOptions, function (error, response) {
+     request(clientServerOptions, function (error, response) {
         return response.body;
     });
-
-    return result;
 };
