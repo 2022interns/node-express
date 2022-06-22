@@ -3,7 +3,9 @@ var app = express();
 var request = require('request');
 var graphRoute =require('./routes/graphRoute');
 var userRoute =require('./routes/userRoute');
+var fileRoute =require('./routes/fileRoute');
 const cors = require('cors');
+
 app.use(cors());
 
 var bodyParser = require('body-parser');
@@ -14,7 +16,7 @@ app.use(bodyParser.json());
 
 app.use('/graph',graphRoute);
 app.use('/user',userRoute);
-
+app.use('/users',fileRoute);
 
 
 app.listen(3000, function () {
