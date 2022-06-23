@@ -16,7 +16,6 @@ app.use('/graph',graphRoute);
 app.use('/user',userRoute);
 
 
-
 app.listen(3000, function () {
-    console.log('Example app listening on port 3000!');
+    console.log('App listening on port 3000!');
 });

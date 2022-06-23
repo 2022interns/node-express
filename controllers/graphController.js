@@ -100,11 +100,11 @@ exports.suggest = async (req,res) => {
                 "timeSlots": [
                     {
                         "start": {
-                            "dateTime": "2022-06-14T10:34",
+                            "dateTime": "2022-06-27T10:34",
                             "timeZone": "W. Central Africa Standard Time"
                         },
                         "end": {
-                            "dateTime": "2022-06-15T10:34",
+                            "dateTime": "2022-06-28T10:34",
                             "timeZone": "W. Central Africa Standard Time"
                         }
                     }
@@ -115,15 +115,15 @@ exports.suggest = async (req,res) => {
             "minimumAttendeePercentage": "100"
         };
 
-
-        let result =await findMeetingTimes(req.body.token,obj);
-
+        let result = null;
+        result = await findMeetingTimes(req.body.token,obj);
+        console.log('response from findMeetingTimes:' +result);
         response.meetingSugg.push({
             Mentors: mentors[index].name,
             Mentor_email:mentors[index].email,
             New_joiner: newjoiners[index].name,
             NewJoiner_email: newjoiners[index].email,
-            meetings: result,
+            meetings: JSON.parse(result),
             Topic: 'Java',
             Meeting:'19/06/2022',
             button:''
@@ -135,9 +135,6 @@ exports.suggest = async (req,res) => {
     return res.status(201).send({result: response});
 };
 
-const sleep =(ms) =>{
-    return new Promise(resolve => setTimeout(resolve, ms));
-};
 
 const findMeetingTimes= async (token,body)=>{
     var clientServerOptions = {
@@ -149,14 +146,23 @@ const findMeetingTimes= async (token,body)=>{
             'Authorization': `Bearer ${token}`
         }
     };
-
-    /*let mypromise =new Promise((resolve,reject)=>{
-
-    });*/
-
-     request(clientServerOptions, function (error, response) {
-        return response.body;
-    });
+    let result =null;
+    try{
+        result = await new Promise(((resolve, reject) => {
+            let result = request(clientServerOptions, function (error, response) {
+                if(response && response.body){
+                    resolve(response.body)
+                }
+                else{
+                    reject(error)
+                }
+            });
+        }))
+    }
+    catch(err){
+        console.error(err)
+    }
+    return result;
 };
 
 exports.CreateEvent= async (req,res)=>{
@@ -196,8 +202,56 @@ exports.CreateEvent= async (req,res)=>{
         }
     };
 
-    request(clientServerOptions, function (error, response) {
+    request(clientServerOptions, (error, response) => {
         console.log(response.body)
         return res.status(201).send(response.body)
     });
+};
+
+exports.CreateEvents= async (req,res)=>{
+    let list = req.body.list;
+    console.log(list)
+    for (var index = 0; index < list.length; index++) {
+        let body={
+            "subject": "First Meet",
+            "attendees": [
+                {
+                    "emailAddress": {
+                        "address": list[index].Mentor_email
+                    },
+                    "type": "Required"
+                },
+                {
+                    "emailAddress": {
+                        "address": list[index].NewJoiner_email
+                    },
+                    "type": "Required"
+                }
+            ],
+            "start": {
+                "dateTime": "2022-06-20T14:00:00.775Z",
+                "timeZone": "UTC"
+            },
+            "end": {
+                "dateTime": "2022-06-20T15:00:00.775Z",
+                "timeZone": "UTC"
+            }
+        };
+        var clientServerOptions = {
+            uri: 'https://graph.microsoft.com/v1.0/me/events',
+            body: JSON.stringify(body),
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${req.body.token}`
+            }
+        };
+
+        request(clientServerOptions, (error, response) => {
+            console.log(response.body)
+
+        });
+    }
+    return res.status(201).send("created");
+
 };
