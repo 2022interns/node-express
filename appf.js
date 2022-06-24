@@ -4,7 +4,6 @@ var cors = require('cors')
 const bodyParser = require("body-parser");
 app.use(cors())
 const port = 3000;
-const formidable = require('formidable');
 const mongodb = require("mongodb").MongoClient;
 const csvtojson = require("csvtojson");
 // let url = "mongodb://username:password@localhost:27017/";
